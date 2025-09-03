@@ -1,0 +1,179 @@
+## templates/blog/post_detail.html
+
+{% extends 'base.html' %}
+{% load static %}
+{% load blog_extras %}
+{% load humanize %}
+
+{% block title %}{{ object.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <!-- левое меню -->
+    <div class="col-md-3">
+      <h5>Пост</h5>
+      {% if user.is_authenticated and object.author == user %}
+        <a class="btn btn-sm btn-outline-warning w-100 mb-2" href="{% url 'blog:update_post' object.pk %}">Редактировать</a>
+        <a class="btn btn-sm btn-outline-danger w-100 mb-2" href="{% url 'blog:delete_post' object.pk %}">Удалить</a>
+      {% endif %}
+
+      {% if user.is_authenticated %}
+        <hr>
+        <h5>Сообщение</h5>
+        <a class="btn btn-sm btn-outline-info w-100 mb-2" href="{% url 'messaging:start' object.author.pk %}">
+          Написать {{ object.author.username }}
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- основной блок -->
+    <div class="col-md-9">
+      <h2>{{ object.title }}</h2>
+      <p class="text-muted">
+        Автор: <strong>{{ object.author.username }}</strong> · {{ object.created_at|naturaltime }}
+      </p>
+
+      {% if object.image %}
+        <img src="{{ object.image.url }}" class="img-fluid rounded mb-3" alt="{{ object.title }}">
+      {% endif %}
+
+      <div class="mb-4">
+        {{ object.text|linebreaks }}
+      </div>
+
+      <!-- Лайки -->
+      <div class="d-flex align-items-center mb-3">
+        <button class="btn btn-sm btn-outline-primary like-btn"
+                data-id="{{ object.pk }}">
+          {% if user in object.likes.all %}♥{% else %}♡{% endif %}
+          <span class="like-count">{{ object.total_likes }}</span>
+        </button>
+        <span class="ms-2">{{ object.total_comments }} комментариев</span>
+      </div>
+
+      <!-- Комментарии -->
+      <div class="comments-section mt-5">
+        <h4>Комментарии (<span class="comments-total">{{ object.total_comments }}</span>)</h4>
+        <ul class="comments-list list-group list-group-flush">
+          {% include 'blog/comments.html' with comments_tree=comments_tree parent_id=0 %}
+        </ul>
+
+        {% if user.is_authenticated %}
+          <form class="ajax-comment-form mt-4" data-post="{{ object.pk }}">
+            {% csrf_token %}
+            <textarea class="form-control mb-2" name="text" rows="3" required placeholder="Напишите комментарий…"></textarea>
+            <button type="submit" class="btn btn-primary">Отправить</button>
+          </form>
+        {% else %}
+          <p class="text-muted mt-3">Войдите, чтобы оставлять комментарии.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- === ОДИН РАБОЧИЙ СКРИПТ === -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+$(function () {
+  const csrftoken = $('[name=csrfmiddlewaretoken]').val();
+
+  // === ЛАЙК ===
+  $(document).on('click', '.like-btn', function () {
+    const btn = $(this);
+    const postId = btn.data('id');
+
+    $.post(`/post/${postId}/like/`, { csrfmiddlewaretoken: csrftoken })
+      .done(data => {
+        btn.find('.like-count').text(data.count);
+        if (data.liked) {
+          btn.removeClass('btn-outline-primary').addClass('btn-primary');
+          btn.html('♥ <span class="like-count">' + data.count + '</span>');
+        } else {
+          btn.removeClass('btn-primary').addClass('btn-outline-primary');
+          btn.html('♡ <span class="like-count">' + data.count + '</span>');
+        }
+      })
+      .fail(xhr => console.error('Ошибка лайка:', xhr.responseText));
+  });
+
+  // === КОММЕНТАРИЙ (новый) ===
+  $(document).on('submit', '.ajax-comment-form', function (e) {
+    e.preventDefault();
+    const form = $(this);
+    const text = form.find('textarea').val().trim();
+    if (!text) return;
+
+    $.post(`/post/{{ object.pk }}/comment/`, {
+      text,
+      csrfmiddlewaretoken: csrftoken
+    })
+      .done(() => {
+        form.find('textarea').val(''); // очищаем
+        location.reload();
+      })
+      .fail(xhr => console.error('Ошибка комментария:', xhr.responseText));
+  });
+
+  // === ОТВЕТ ===
+  $(document).on('click', '.reply-btn', function () {
+    const parentId = $(this).data('parent');
+    const text = prompt('Ваш ответ:');
+    if (!text) return;
+
+    $.post(`/post/{{ object.pk }}/comment/`, {
+      text,
+      parent: parentId,
+      csrfmiddlewaretoken: csrftoken
+    })
+      .done(() => location.reload())
+      .fail(xhr => console.error('Ошибка ответа:', xhr.responseText));
+  });
+
+  // === УДАЛЕНИЕ ===
+  $(document).on('click', '.delete-btn', function () {
+    const li = $(this).closest('li');
+    const commentId = li.data('id');
+    if (confirm('Удалить?')) {
+      $.ajax({
+        url: `/comment/${commentId}/`,
+        method: 'DELETE',
+        headers: { 'X-CSRFToken': csrftoken },
+        success: () => location.reload()
+      });
+    }
+  });
+
+  // === РЕДАКТИРОВАНИЕ ===
+ /*(document).on('click', '.edit-btn', function () {
+    const li = $(this).closest('li');
+    const text = li.find('.comment-text').text().trim();
+    li.find('.comment-text').replaceWith(`
+      <textarea class="form-control edit-area">${text}</textarea>
+      <button class="btn btn-sm btn-success save-btn">Сохранить</button>
+      <button class="btn btn-sm btn-secondary cancel-btn">Отмена</button>
+    `);
+  });
+
+  $(document).on('click', '.save-btn', function () {
+    const li = $(this).closest('li');
+    const commentId = li.data('id');
+    const newText = li.find('.edit-area').val().trim();
+    if (!newText) return;
+
+    $.ajax({
+      url: `/comment/${commentId}/`,
+      method: 'PATCH',
+      headers: { 'X-CSRFToken': csrftoken },
+      data: { text: newText },
+      success: () => location.reload()
+    });
+  });
+
+  $(document).on('click', '.cancel-btn', function () {
+    location.reload();
+  }); */
+});
+</script>
+{% endblock %}

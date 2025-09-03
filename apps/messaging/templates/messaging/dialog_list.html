@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Диалоги{% endblock %}
+{% block content %}
+<h2>Диалоги</h2>
+
+{% for thread in threads %}
+  <div class="card mb-2">
+    <div class="card-body text-start">
+
+      <!-- первая строка: последнее сообщение -->
+      <div class="mb-1">
+        {% if thread.last_msg %}
+          {{ thread.last_msg.text|truncatechars:70 }}
+        {% else %}
+          <span class="text-muted">Пока пусто</span>
+        {% endif %}
+      </div>
+
+      <!-- вторая строка: участники + интервал + кнопка -->
+      <div>
+        {% if thread.user1 == request.user %}
+          {{ thread.user1.username }}, {{ thread.user2.username }}
+        {% else %}
+          {{ thread.user2.username }}, {{ thread.user1.username }}
+        {% endif %}
+        <span class="text-muted ms-2">{{ thread.last_msg.created_at|timesince }} назад</span>
+        <a class="btn btn-sm btn-primary ms-2" href="{% url 'messaging:chat' thread.pk %}">Открыть</a>
+      </div>
+
+    </div>
+  </div>
+{% empty %}
+  <p class="text-muted">Диалогов пока нет.</p>
+{% endfor %}
+{% endblock %}
+

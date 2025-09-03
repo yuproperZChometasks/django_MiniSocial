@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Редактировать{% else %}Добавить{% endif %} комментарий{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h2>
+      {% if parent %}
+        Ответить на комментарий {{ parent.author.username }}
+      {% else %}
+        Добавить комментарий к посту «{{ post.title }}»
+      {% endif %}
+    </h2>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-primary">Сохранить</button>
+      <a class="btn btn-secondary ms-2" href="{% url 'blog:post_detail' post.pk %}">Отмена</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

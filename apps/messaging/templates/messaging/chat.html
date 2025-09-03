@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Чат с {{ partner.username }}{% endblock %}
+{% block content %}
+<h2>Чат с {{ partner.username }}</h2>
+
+<div class="mb-3" style="height: 300px; overflow-y: scroll; border: 1px solid #ddd; padding: 10px;">
+  {% for msg in messages reversed %}
+    <div class="mb-2 {% if msg.sender == user %}text-end{% endif %}">
+      <strong>{{ msg.sender.username }}</strong>
+      <span class="text-muted small">{{ msg.created_at|time:"H:i" }}</span>
+      <div>{{ msg.text|linebreaksbr }}</div>
+    </div>
+  {% empty %}
+    <p class="text-muted">Сообщений нет.</p>
+  {% endfor %}
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-primary">Отправить</button>
+</form>
+{% endblock %}

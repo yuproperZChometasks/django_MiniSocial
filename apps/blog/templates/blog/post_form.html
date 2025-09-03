@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if object %}Редактировать пост{% else %}Создать пост{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h2>{% if object %}Редактировать пост{% else %}Создать пост{% endif %}</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-primary">Сохранить</button>
+      <a class="btn btn-secondary ms-2" href="{% url 'blog:feed' %}">Отмена</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

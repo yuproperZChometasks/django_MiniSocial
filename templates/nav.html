@@ -1,0 +1,68 @@
+<nav class="navbar navbar-expand navbar-dark bg-primary">
+  <style>
+  /* компактные кнопки в горизонтальном меню */
+  .navbar-nav .btn,
+  .navbar-nav .nav-link {
+    font-size: 0.75rem;   /* размер шрифта */
+    padding: 0.2rem 0.4rem; /* высота/ширина */
+    line-height: 1;
+  }
+  </style>
+  <div class="container-fluid">
+    <div class="d-flex align-items-center w-100">
+      <a class="navbar-brand" href="{% url 'blog:feed' %}">Microblog</a>
+
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'blog:feed' %}">Лента</a>
+        </li>
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'blog:my_feed' %}">Моя лента</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'subscriptions:feed' %}">Подписки</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'blog:create_post' %}">Создать пост</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'notifications:list' %}">
+              Уведомления
+              <span id="notification-badge" class="badge bg-danger"></span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'messaging:dialogs' %}">Сообщения</a>
+          </li>
+          <form class="d-flex" method="get" action="{% url 'search:index' %}">
+            <input class="form-control form-control-sm me-1" type="search" name="q" placeholder="Поиск…">
+            <button class="btn btn-sm btn-outline-light">🔍</button>
+          </form>
+        {% endif %}
+      </ul>
+
+      <ul class="navbar-nav ms-auto">
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'users:profile' pk=user.pk %}">{{ user.username }}</a>
+          </li>
+          <li class="nav-item">
+            <form method="post" action="{% url 'logout' %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link nav-link p-0 m-0 align-baseline border-0 bg-transparent">Выйти</button>
+            </form>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'login' %}">Войти</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'users:signup' %}">Регистрация</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,24 @@
+{% load blog_extras %}
+{% load humanize %}
+
+{% for comment in comments_tree|get_item:parent_id %}
+  <li class="list-group-item" data-id="{{ comment.id }}">
+    <strong>{{ comment.author.username }}</strong> · {{ comment.created_at|naturaltime }}<br>
+    <div class="comment-text">{{ comment.text|linebreaks }}</div>
+
+    <div class="mt-2">
+      {% comment %}Одна кнопка «Удалить» для: автора комментария ≤ 1 час, автор поста, admin{% endcomment %}
+      {% if user.is_superuser or user == comment.post.author or user == comment.author and comment.created_at|timesince|slice:":2" != "1 " %}
+        <button class="btn btn-sm btn-outline-danger delete-btn">Удалить</button>
+      {% endif %}
+
+      <button class="btn btn-sm btn-outline-secondary reply-btn" data-parent="{{ comment.id }}">Ответить</button>
+    </div>
+
+    {% if comment.id in comments_tree %}
+      <ul class="list-group list-group-flush ms-4">
+        {% include 'blog/comments.html' with comments_tree=comments_tree parent_id=comment.id %}
+      </ul>
+    {% endif %}
+  </li>
+{% endfor %}

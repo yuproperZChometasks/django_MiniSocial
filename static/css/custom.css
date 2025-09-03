@@ -1,0 +1,2 @@
+/* улучшаем визуал  */
+:root { --bs-body-bg: #f8f9fa; --bs-border-radius: .5rem; } body { font-family: system-ui, sans-serif; } .card { box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); }

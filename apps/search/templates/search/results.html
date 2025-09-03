@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load search_extras %}
+{% block title %}Поиск{% endblock %}
+{% block content %}
+<div class="container mt-3">
+  <form class="row g-2 mb-4" method="get">
+    <input type="hidden" name="tab" value="{{ tab }}">
+    <div class="col-md-10">
+      <input class="form-control" type="search" name="q" value="{{ query }}"
+             placeholder="Введите фразу…">
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100">Найти</button>
+    </div>
+  </form>
+
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <a class="nav-link {% if tab == 'posts' %}active fw-bold{% endif %}"
+         href="?q={{ query }}&tab=posts">Посты ({{ results.paginator.count }})</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if tab == 'users' %}active fw-bold{% endif %}"
+         href="?q={{ query }}&tab=users">Пользователи ({{ results.paginator.count }})</a>
+    </li>
+  </ul>
+
+  {% if tab == 'posts' %}
+    {% for post in results %}
+      <div class="card mb-2">
+        <div class="card-body">
+          <h6 class="card-title">{{ post.title|highlight:query }}</h6>
+          <p class="text-muted small">{{ post.created_at|date:"d.m.Y H:i" }}</p>
+          <a href="{% url 'blog:post_detail' post.pk %}" class="btn btn-sm btn-outline-primary">Читать</a>
+          </div>
+      </div>
+    {% empty %}
+      <p>Ничего не найдено.</p>
+    {% endfor %}
+  {% else %}
+    {% for user_obj in results %}
+      <div class="d-flex align-items-center mb-2">
+        <strong>{{ user_obj.username|highlight:query }}</strong>
+        <a href="{% url 'users:profile' pk=user_obj.pk %}" class="btn btn-sm btn-outline-primary ms-auto">Профиль</a>
+      </div>
+    {% empty %}
+      <p>Ничего не найдено.</p>
+    {% endfor %}
+  {% endif %}
+
+  {% include 'pagination.html' %}
+</div>
+{% endblock %}

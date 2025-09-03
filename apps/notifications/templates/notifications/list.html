@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Уведомления{% endblock %}
+{% block content %}
+<h2>Уведомления</h2>
+{% for n in notifications %}
+  <div class="card mb-2">
+    <div class="card-body">
+      <small class="text-muted">{{ n.created_at|timesince }} назад</small>
+      <p class="mb-0">{{ n.actor }} {{ n.get_verb_display }} {{ n.target }}</p>
+      <form action="{% url 'notifications:mark' n.pk %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-outline-primary">Прочитано</button>
+      </form>
+    </div>
+  </div>
+{% empty %}
+  <p>Уведомлений нет.</p>
+{% endfor %}
+{% endblock %}
+
+
