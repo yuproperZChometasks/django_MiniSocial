@@ -7,9 +7,20 @@
   <div class="col-md-4">
     <h2>{{ user.username }}</h2>
 
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'users:profile_update' %}">
+      Редактировать профиль
+    </a>
+
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       {{ form.as_p }}
+      {% if user.avatar %}
+        <div class="mb-3">
+          <p class="small text-muted">Текущая аватарка:</p>
+          <img src="{{ user.avatar.url }}" alt="Аватар" class="rounded-circle img-thumbnail"
+              style="width: 120px; height: 120px; object-fit: cover;">
+        </div>
+      {% endif %}
       <button class="btn btn-primary">Сохранить</button>
     </form>
 
