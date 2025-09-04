@@ -36,10 +36,9 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'messaging:dialogs' %}">Сообщения</a>
           </li>
-          <form class="d-flex" method="get" action="{% url 'search:index' %}">
-            <input class="form-control form-control-sm me-1" type="search" name="q" placeholder="Поиск…">
-            <button class="btn btn-sm btn-outline-light">🔍</button>
-          </form>
+
+          <!-- новый код -->
+          <button id="search-toggle" class="btn btn-sm btn-outline-light ms-2">🔍</button>
         {% endif %}
       </ul>
 
