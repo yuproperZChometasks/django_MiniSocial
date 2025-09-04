@@ -5,4 +5,5 @@ app_name = 'subscriptions'
 
 urlpatterns = [
     path('feed/', views.FeedView.as_view(), name='feed'),
+    path('unfollow/<int:author_pk>/', views.unsubscribe, name='unsubscribe'),
 ]
