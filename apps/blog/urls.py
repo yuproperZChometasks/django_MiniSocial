@@ -15,6 +15,8 @@ urlpatterns = [
     path("post/<int:pk>/like/", views.LikeToggleView.as_view(), name="like_api"),
 
     # Комментарии
-    path("post/<int:pk>/comment/", views.comment_api, name="comment_api"),
-    path("comment/<int:pk>/", views.comment_detail_api, name="comment_detail_api"),  # edit/delete
+    path("post/<int:pk>/comment/", views.CommentCreateView.as_view(), name="comment_api"),
+    path("comment/<int:pk>/delete/", views.CommentDeleteView.as_view(), name="comment_delete"),
+    path("comment/<int:pk>/update/", views.CommentUpdateView.as_view(), name="comment_update"),
+
 ]

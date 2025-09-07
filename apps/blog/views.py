@@ -14,6 +14,8 @@ from django.utils.decorators import method_decorator
 import logging
 from .models import Post, Comment
 from .forms import CommentForm
+#from django.views.generic.edit import CreateView
+#from django.views.generic.edit import DeleteView, UpdateView
 
 
 
@@ -87,50 +89,56 @@ class LikeToggleView(LoginRequiredMixin, View):
             like.delete()
         return JsonResponse({"liked": created, "count": post.likes.count()})
 
-@login_required
-@require_POST
-@csrf_exempt
-def comment_api(request, pk):
-    """Создание комментария (и ответа)."""
-    post = get_object_or_404(Post, pk=pk)
-    form = CommentForm(request.POST)
-    if form.is_valid():
-        comment = form.save(commit=False)
-        comment.author = request.user
-        comment.post = post
-        parent_id = request.POST.get("parent")
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    model = Comment
+    form_class = CommentForm
+    http_method_names = ["post"]
+
+    def dispatch(self, request, *args, **kwargs):
+        self.post_obj = get_object_or_404(Post, pk=kwargs["pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        form.instance.post = self.post_obj
+        parent_id = self.request.POST.get("parent")
         if parent_id:
-            comment.parent = get_object_or_404(Comment, pk=parent_id, post=post)
-        comment.save()
+            form.instance.parent = get_object_or_404(Comment, pk=parent_id, post=self.post_obj)
+        self.object = form.save()
         return JsonResponse({
-            "id": comment.pk,
-            "author": comment.author.username,
-            "text": comment.text,
-            "created_at": comment.created_at.strftime('%d.%m %H:%M'),
-            "total": post.total_comments(),
-            "can_edit": comment.can_edit(request.user)
+            "id": self.object.pk,
+            "author": self.object.author.username,
+            "text": self.object.text,
+            "created_at": self.object.created_at.strftime('%d.%m %H:%M'),
+            "total": self.post_obj.total_comments(),
         })
-    return JsonResponse({"error": form.errors}, status=400)
 
-@login_required
-@require_http_methods(["PATCH", "DELETE"])
-@csrf_exempt
-def comment_detail_api(request, pk):
-    """Редактирование / удаление комментария."""
-    comment = get_object_or_404(Comment, pk=pk)
-    if not comment.can_edit(request.user):
-        return JsonResponse({"error": "Forbidden"}, status=403)
-
-    if request.method == "PATCH":
-        data = QueryDict(request.body)
-        form = CommentForm(data, instance=comment)
-        if form.is_valid():
-            comment = form.save()
-            return JsonResponse({"id": comment.pk, "text": comment.text})
+    def form_invalid(self, form):
         return JsonResponse({"error": form.errors}, status=400)
 
-    if request.method == "DELETE":
-        post = comment.post
-        comment.delete()
-        return JsonResponse({"total": post.total_comments()})
+
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Comment
+
+    def test_func(self):
+        return self.get_object().can_edit(self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        self.get_object().delete()
+        return JsonResponse({})
+
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
+    http_method_names = ["patch"]
+
+    def test_func(self):
+        return self.get_object().can_edit(self.request.user)
+
+    def form_valid(self, form):
+        self.object = form.save()
+        return JsonResponse({"id": self.object.pk, "text": self.object.text})
+
+    def form_invalid(self, form):
+        return JsonResponse({"error": form.errors}, status=400)
 
