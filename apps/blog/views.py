@@ -1,3 +1,4 @@
+from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
@@ -13,6 +14,9 @@ from django.utils.decorators import method_decorator
 import logging
 from .models import Post, Comment
 from .forms import CommentForm
+
+
+
 
 class FeedView(ListView):
     model = Post
@@ -73,15 +77,15 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         return self.get_object().author == self.request.user
 
-@login_required
-@require_POST
-@csrf_exempt
-def like_api(request, pk):
-    post = get_object_or_404(Post, pk=pk)
-    like, created = Like.objects.get_or_create(user=request.user, post=post)
-    if not created:
-        like.delete()
-    return JsonResponse({"liked": created, "count": post.likes.count()})
+class LikeToggleView(LoginRequiredMixin, View):
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
+        if not created:
+            like.delete()
+        return JsonResponse({"liked": created, "count": post.likes.count()})
 
 @login_required
 @require_POST

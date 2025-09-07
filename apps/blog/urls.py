@@ -12,10 +12,9 @@ urlpatterns = [
     path("post/<int:pk>/delete/", views.PostDeleteView.as_view(), name="delete_post"),
 
     # API-лайки
-    path("post/<int:pk>/like/", views.like_api, name="like_api"),
+    path("post/<int:pk>/like/", views.LikeToggleView.as_view(), name="like_api"),
 
     # Комментарии
     path("post/<int:pk>/comment/", views.comment_api, name="comment_api"),
     path("comment/<int:pk>/", views.comment_detail_api, name="comment_detail_api"),  # edit/delete
 ]
-
