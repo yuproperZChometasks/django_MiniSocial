@@ -77,7 +77,14 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
 $(function () {
-  const csrftoken = $('[name=csrfmiddlewaretoken]').val();
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  // === временный лог для отладки ===
+  $(document).on('click', '.delete-btn', function () {
+    const id = $(this).closest('li').data('id');
+    console.log('Удаляем коммент', id);
+  });
+  // === конец лога ===
 
   // === ЛАЙК ===
   $(document).on('click', '.like-btn', function () {
@@ -135,45 +142,20 @@ $(function () {
   $(document).on('click', '.delete-btn', function () {
     const li = $(this).closest('li');
     const commentId = li.data('id');
-    if (confirm('Удалить?')) {
-      $.ajax({
-        url: `/comment/${commentId}/`,
-        method: 'DELETE',
-        headers: { 'X-CSRFToken': csrftoken },
-        success: () => location.reload()
-      });
-    }
-  });
-
-  // === РЕДАКТИРОВАНИЕ ===
- /*(document).on('click', '.edit-btn', function () {
-    const li = $(this).closest('li');
-    const text = li.find('.comment-text').text().trim();
-    li.find('.comment-text').replaceWith(`
-      <textarea class="form-control edit-area">${text}</textarea>
-      <button class="btn btn-sm btn-success save-btn">Сохранить</button>
-      <button class="btn btn-sm btn-secondary cancel-btn">Отмена</button>
-    `);
-  });
-
-  $(document).on('click', '.save-btn', function () {
-    const li = $(this).closest('li');
-    const commentId = li.data('id');
-    const newText = li.find('.edit-area').val().trim();
-    if (!newText) return;
+    if (!confirm('Удалить?')) return;
 
     $.ajax({
-      url: `/comment/${commentId}/`,
-      method: 'PATCH',
-      headers: { 'X-CSRFToken': csrftoken },
-      data: { text: newText },
-      success: () => location.reload()
+      url: `/comment/${commentId}/delete/`,   // ← добавили /delete/
+      method: 'DELETE',
+      headers: {'X-CSRFToken': csrftoken},   // ← в заголовке
+      success: () => li.remove(),
+      error: xhr => {
+        // показываем текст ошибки, если она JSON
+        const msg = xhr.responseJSON?.error || 'Не удалось удалить';
+        alert(msg);
+      }
     });
   });
-
-  $(document).on('click', '.cancel-btn', function () {
-    location.reload();
-  }); */
 });
 </script>
 {% endblock %}

@@ -125,7 +125,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.get_object().delete()
-        return JsonResponse({})
+        return JsonResponse({}, status=200)   # ← важно: 200 + пустой объект
 
 class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Comment

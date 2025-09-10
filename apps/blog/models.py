@@ -55,9 +55,11 @@ class Comment(models.Model):
         ordering = ["created_at"]
 
     def can_edit(self, user):
-        from django.utils import timezone
-        return user == self.author and \
-               (timezone.now() - self.created_at).total_seconds() < 24 * 3600
+        return (
+            user == self.author and
+            (timezone.now() - self.created_at).total_seconds() < 3600
+        ) or user == self.post.author or user.is_superuser   # ← добавлено
+
 
     def __str__(self):
         return f"Comment by {self.author} on {self.post}"
