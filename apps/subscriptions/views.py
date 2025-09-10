@@ -1,10 +1,10 @@
 from datetime import date
+from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
-from apps.blog.models import Post
-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
+from apps.blog.models import Post
 from apps.users.models import User
 from .models import Subscription
 
@@ -21,9 +21,8 @@ class FeedView(LoginRequiredMixin, ListView):
             created_at__gte=start
         ).distinct().order_by('-created_at')
 
-
-@login_required
-def unsubscribe(request, author_pk):
-    author = get_object_or_404(User, pk=author_pk)
-    Subscription.objects.filter(user=request.user, author=author).delete()
-    return redirect(request.META.get('HTTP_REFERER', '/'))
+class UnsubscribeView(LoginRequiredMixin, View):
+    def post(self, request, author_pk):
+        author = get_object_or_404(User, pk=author_pk)
+        Subscription.objects.filter(user=request.user, author=author).delete()
+        return redirect(request.META.get('HTTP_REFERER', '/'))
